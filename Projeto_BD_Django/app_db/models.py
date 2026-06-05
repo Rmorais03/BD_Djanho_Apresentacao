@@ -130,8 +130,7 @@ class Companies(models.Model):
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
     deleted_at = models.DateTimeField(blank=True, null=True)
-    client_owner = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True, related_name='companies_owned')
-    emergency_admin = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True, related_name='companies_emergency')
+    manager_user = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True)
 
     class Meta:
         managed = False
