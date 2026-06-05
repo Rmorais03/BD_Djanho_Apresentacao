@@ -224,4 +224,4 @@ def get_avg_resolution_hours():
         ''')
         row = cursor.fetchone()
         avg_seconds = row[0] if row and row[0] else 0
-        return round(avg_seconds / 3600.0, 2) if avg_seconds else 0
+        return round(float(avg_seconds) / 3600.0, 2) if avg_seconds else 0
