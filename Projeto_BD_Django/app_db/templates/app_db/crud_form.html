@@ -1,0 +1,113 @@
+{% extends "app_db/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-page-header {
+        animation: fadeInDown 0.4s var(--ease-out) both;
+        margin-bottom: var(--space-xl);
+    }
+    .form-card {
+        animation: scaleIn 0.45s var(--ease-out) both;
+        animation-delay: 0.1s;
+    }
+    .form-group {
+        animation: fadeInUp 0.35s var(--ease-out) both;
+    }
+    .form-group:nth-child(1) { animation-delay: 0.08s; }
+    .form-group:nth-child(2) { animation-delay: 0.12s; }
+    .form-group:nth-child(3) { animation-delay: 0.16s; }
+    .form-group:nth-child(4) { animation-delay: 0.20s; }
+    .form-group:nth-child(5) { animation-delay: 0.24s; }
+    .form-group:nth-child(6) { animation-delay: 0.28s; }
+    .form-group:nth-child(7) { animation-delay: 0.32s; }
+    .form-group:nth-child(8) { animation-delay: 0.36s; }
+
+    .form-input:hover, .form-select:hover, .form-textarea:hover {
+        border-color: var(--border-hover);
+    }
+    .form-input, .form-select, .form-textarea {
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        transform: scale(1.005);
+    }
+
+    .form-actions {
+        animation: fadeInUp 0.4s var(--ease-out) both;
+        animation-delay: 0.35s;
+    }
+    .form-actions .btn-primary {
+        transition: all 0.25s var(--ease-out);
+    }
+    .form-actions .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59,130,246,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header form-page-header">
+    <div>
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-subtitle">Preencha os dados abaixo para guardar o registo</p>
+    </div>
+    <a href="{% url cancel_url %}" class="btn btn-secondary">Voltar à lista</a>
+</div>
+
+<div class="form-card">
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        
+        <div class="form-grid">
+            {% for field in form %}
+            <div class="form-group {% if field.field.widget.input_type == 'textarea' %}full-width{% endif %}">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span style="color: var(--red-400);">*</span>{% endif %}
+                </label>
+                
+                {% if field.field.widget.input_type == 'checkbox' %}
+                <div class="form-checkbox-wrapper">
+                    <input type="checkbox" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-checkbox" {% if field.value %}checked{% endif %}>
+                    <span style="font-size: 14px; color: var(--text-primary);">Sim, ativar esta opção</span>
+                </div>
+                {% elif field.field.widget.input_type == 'select' %}
+                    <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-select">
+                        {% for choice_value, choice_label in field.field.choices %}
+                            <option value="{{ choice_value|default_if_none:'' }}" {% if field.value|stringformat:'s' == choice_value|stringformat:'s' %}selected{% endif %}>
+                                {{ choice_label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                {% elif field.field.widget.input_type == 'textarea' %}
+                    <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-textarea" rows="4">{{ field.value|default_if_none:'' }}</textarea>
+                {% else %}
+                    <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-input" value="{{ field.value|default_if_none:'' }}">
+                {% endif %}
+
+                {% if field.errors %}
+                <div class="form-error">
+                    {% for error in field.errors %}{{ error }}{% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if field.help_text %}
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ field.help_text }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Guardar Registo
+            </button>
+            <a href="{% url cancel_url %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

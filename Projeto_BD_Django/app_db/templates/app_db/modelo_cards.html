@@ -1,0 +1,128 @@
+{% extends "app_db/base.html" %}
+{% load app_filters %}
+
+{% block title %}Modelo Lógico (Cards){% endblock %}
+
+{% block extra_head %}
+<style>
+    .schema-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: var(--space-xl);
+        padding-bottom: var(--space-2xl);
+    }
+    
+    .table-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        animation: fadeInUp 0.5s ease-out both;
+    }
+    
+    .table-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-elevated);
+        border-color: var(--blue-500);
+    }
+    
+    .table-header {
+        background: var(--bg-table-header);
+        padding: var(--space-md) var(--space-lg);
+        border-bottom: 1px solid var(--border-default);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    
+    .table-name {
+        font-family: var(--font-display);
+        font-weight: 700; font-size: 16px;
+        color: var(--text-primary);
+        display: flex; align-items: center; gap: 8px;
+    }
+    
+    .table-name svg { width: 18px; height: 18px; color: var(--blue-400); }
+    
+    .column-list { list-style: none; padding: 0; margin: 0; }
+    
+    .column-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 10px var(--space-lg);
+        border-bottom: 1px solid var(--border-subtle);
+        font-family: var(--font-mono); font-size: 12px;
+    }
+    .column-item:last-child { border-bottom: none; }
+    .column-item:hover { background: var(--bg-table-row-hover); }
+    
+    .col-name-wrapper { display: flex; align-items: center; gap: 8px; }
+    
+    .col-icon { font-size: 14px; width: 16px; text-align: center; }
+    .pk-icon { color: var(--amber-400); }
+    .fk-icon { color: var(--blue-400); }
+    .col-icon-empty { width: 16px; }
+    
+    .col-name { color: var(--text-primary); font-weight: 500; }
+    .col-name.is-pk { font-weight: 700; color: var(--amber-400); }
+    .col-name.is-fk { color: var(--blue-400); }
+    
+    .col-type { color: var(--text-secondary); text-align: right; }
+    
+    .fk-reference {
+        display: block; font-size: 10px; color: var(--text-muted);
+        margin-top: 2px; margin-left: 24px;
+        font-family: var(--font-sans);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Modelo Lógico — Cards</h1>
+        <p class="page-subtitle">Estrutura das tabelas da base de dados e suas relações</p>
+    </div>
+    <div class="meta-chips">
+        <div class="meta-chip"><span>🔑</span> Primary Key</div>
+        <div class="meta-chip"><span>🔗</span> Foreign Key</div>
+        <div class="meta-chip">{{ models|length }} Tabelas</div>
+    </div>
+</div>
+
+<div class="schema-grid">
+    {% for model in models %}
+    <div class="table-card" style="animation-delay: 0.1s;">
+        <div class="table-header">
+            <div class="table-name">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                {{ model.db_table }}
+            </div>
+        </div>
+        <ul class="column-list">
+            {% for field in model.fields %}
+            <div class="column-item">
+                <div style="flex: 1;">
+                    <div class="col-name-wrapper">
+                        {% if field.is_pk %}
+                            <span class="col-icon pk-icon" title="Primary Key">🔑</span>
+                        {% elif field.is_fk %}
+                            <span class="col-icon fk-icon" title="Foreign Key">🔗</span>
+                        {% else %}
+                            <span class="col-icon-empty"></span>
+                        {% endif %}
+                        
+                        <span class="col-name {% if field.is_pk %}is-pk{% elif field.is_fk %}is-fk{% endif %}">
+                            {{ field.name }}
+                        </span>
+                    </div>
+                    {% if field.is_fk %}
+                        <div class="fk-reference">→ {{ field.related_model }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-type">{{ field.type|replace:"Field"|replace:"Char"|replace:"Integer"|replace:"Date"|replace:"Time" }}</div>
+            </div>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

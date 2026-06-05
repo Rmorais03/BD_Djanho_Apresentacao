@@ -1,0 +1,324 @@
+{% extends "app_db/base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* ── KPI row ── */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--space-md);
+        margin-bottom: var(--space-2xl);
+    }
+    .kpi {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        transition: transform 0.3s var(--ease-out), border-color 0.3s ease, box-shadow 0.3s ease;
+        position: relative; overflow: hidden;
+    }
+    .kpi::after {
+        content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+        background: var(--kpi-color, var(--blue-500)); opacity: 0.5;
+    }
+    .kpi:hover { transform: translateY(-3px); border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+    .kpi-val {
+        font-size: 32px; font-weight: 700; font-family: var(--font-display);
+        letter-spacing: -0.03em; line-height: 1;
+        color: var(--kpi-color, var(--text-primary));
+    }
+    .kpi-lbl {
+        font-size: 11px; color: var(--text-muted); text-transform: uppercase;
+        letter-spacing: 0.08em; font-weight: 600; margin-top: 6px;
+    }
+
+    /* ── Tickets Widget v2 ── */
+    .tickets-widget-v2 {
+        display: flex; align-items: center; justify-content: space-around;
+        gap: var(--space-xl); flex-wrap: wrap; height: 100%;
+        padding: var(--space-md) 0;
+    }
+    .tw-kpi {
+        text-align: center; flex: 1; min-width: 140px;
+    }
+    .tw-kpi-val {
+        font-size: 56px; font-weight: 700; font-family: var(--font-display);
+        color: var(--blue-400); line-height: 1;
+        text-shadow: 0 0 24px rgba(59,130,246,0.2);
+    }
+    .tw-kpi-val span { font-size: 24px; color: var(--text-secondary); margin-left: 4px; }
+    .tw-kpi-label {
+        font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--text-muted); font-weight: 600; margin-top: 12px; line-height: 1.4;
+    }
+    .tw-chart {
+        flex: 1; min-width: 200px; max-width: 250px;
+        position: relative; height: 220px;
+        display: flex; justify-content: center; align-items: center;
+    }
+
+    /* ── Section titles ── */
+    .section-title {
+        font-size: 13px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.1em; color: var(--text-muted);
+        margin-bottom: var(--space-lg); margin-top: var(--space-2xl);
+        padding-bottom: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    .section-title:first-of-type { margin-top: 0; }
+
+    /* ── Charts grid ── */
+    .charts-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-xl);
+        margin-bottom: var(--space-xl);
+    }
+    .chart-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        display: flex; flex-direction: column;
+        min-width: 0; min-height: 0;
+    }
+    .chart-card:hover { border-color: var(--border-hover); box-shadow: 0 4px 20px rgba(59,130,246,0.06); }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-card h3 {
+        font-size: 14px; font-weight: 600; color: var(--text-secondary);
+        margin-bottom: var(--space-lg); font-family: var(--font-display);
+    }
+    .chart-wrap { position: relative; flex: 1; width: 100%; min-height: 260px; max-height: 350px; display: flex; justify-content: center; align-items: center; }
+    
+    /* Center the canvas strictly inside the wrapper */
+    .chart-wrap canvas { max-width: 100%; max-height: 100%; }
+
+    /* ── Tables row ── */
+    .tables-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-xl);
+    }
+    .tables-row h3 {
+        font-size: 14px; font-weight: 600; color: var(--text-secondary);
+        margin-bottom: var(--space-md); font-family: var(--font-display);
+    }
+
+    /* ── Reveal on scroll ── */
+    .reveal {
+        opacity: 0; transform: translateY(16px);
+        transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 900px) {
+        .charts-row, .tables-row { grid-template-columns: 1fr; }
+        .chart-card.wide { grid-column: auto; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Visão analítica — queries via Raw SQL (PostgreSQL)</p>
+    </div>
+</div>
+
+{% if db_connected %}
+<div class="db-info-card reveal">
+    <div><span class="db-info-label">Status</span> <span class="badge badge-active">Connected</span></div>
+    <div class="db-info-separator"></div>
+    <div><span class="db-info-label">Engine</span> <code>NeonDB PostgreSQL</code></div>
+    <div class="db-info-separator"></div>
+    <div><span class="db-info-label">Version</span> <code>{{ db_version }}</code></div>
+    <div class="db-info-separator"></div>
+    <div><span class="db-info-label">Tables</span> <code>{{ total_tables }}</code></div>
+    <div class="db-info-separator"></div>
+    <div><span class="db-info-label">Sync</span> <code>{{ now|date:"H:i:s" }}</code></div>
+</div>
+{% endif %}
+
+<!-- ═══ KPIs ═══ -->
+<div class="kpi-row">
+    {% for stat in stats %}
+    <div class="kpi reveal" style="--kpi-color: {{ stat.color }};">
+        <div class="kpi-val">{{ stat.count }}</div>
+        <div class="kpi-lbl">{{ stat.label }}</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ═══ CHARTS ═══ -->
+<div class="section-title reveal">Relatórios SQL</div>
+
+<div class="charts-row">
+    <div class="chart-card reveal">
+        <h3>Número de Clientes por Estado de Conformidade NIS2</h3>
+        <div class="chart-wrap"><canvas id="complianceChart"></canvas></div>
+    </div>
+    <div class="chart-card reveal">
+        <h3>Top 5 Clientes com Mais Incidentes de Segurança</h3>
+        <div class="chart-wrap"><canvas id="incidentsChart"></canvas></div>
+    </div>
+    <div class="chart-card reveal">
+        <h3>Distribuição de Utilizadores por Perfil</h3>
+        <div class="chart-wrap"><canvas id="rolesChart"></canvas></div>
+    </div>
+    <div class="chart-card reveal">
+        <h3>Estado dos Pedidos/Tickets de Suporte</h3>
+        <div class="tickets-widget-v2">
+            <div class="tw-kpi">
+                <div class="tw-kpi-val">{{ avg_resolution_hours }}<span>h</span></div>
+                <div class="tw-kpi-label">Tempo Médio<br>de Resolução</div>
+            </div>
+            <div class="tw-chart">
+                <canvas id="ticketsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-card wide reveal">
+        <h3>Total de Documentos Submetidos por Cliente e por Mês</h3>
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>c.name</th>
+                            <th>DATE_TRUNC('month')</th>
+                            <th>COUNT(d.id)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in documents_monthly_data %}
+                        <tr>
+                            <td style="font-weight: 500;">{{ row.name }}</td>
+                            <td class="cell-mono">{{ row.month|date:"F Y" }}</td>
+                            <td class="cell-mono">{{ row.doc_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="empty-state"><div class="empty-state-text">Sem dados.</div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ RECENT RECORDS ═══ -->
+<div class="section-title reveal">Registos Recentes</div>
+
+<div class="tables-row">
+    <div class="reveal">
+        <h3>Últimos Utilizadores</h3>
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>name / email</th><th>company_id</th><th>role_id</th></tr></thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td><div style="font-weight:500;">{{ user.name }}</div><div class="cell-secondary">{{ user.email }}</div></td>
+                            <td>{% if user.company_id %}<span class="cell-mono">{{ user.company_id }}</span>{% else %}<span class="cell-secondary">NULL</span>{% endif %}</td>
+                            <td>{% if user.role_id %}<span class="badge badge-info">{{ user.role_id }}</span>{% else %}<span class="badge badge-inactive">NULL</span>{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="empty-state"><div class="empty-state-text">Sem utilizadores.</div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="reveal">
+        <h3>Últimas Empresas</h3>
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead><tr><th>name</th><th>nif</th><th>is_active</th></tr></thead>
+                    <tbody>
+                        {% for comp in recent_companies %}
+                        <tr>
+                            <td style="font-weight:500;">{{ comp.name }}</td>
+                            <td class="cell-mono">{{ comp.nif }}</td>
+                            <td>{% if comp.is_active %}<span class="badge badge-active">True</span>{% else %}<span class="badge badge-inactive">False</span>{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="empty-state"><div class="empty-state-text">Sem empresas.</div></td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    /* Scroll-reveal */
+    const obs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+            if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+        });
+    }, { threshold: 0.06 });
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+        el.style.transitionDelay = (i * 0.04) + 's';
+        obs.observe(el);
+    });
+
+    /* Chart.js */
+    const P = ['rgba(59,130,246,0.75)','rgba(6,182,212,0.75)','rgba(16,185,129,0.75)','rgba(139,92,246,0.75)','rgba(244,63,94,0.75)','rgba(245,158,11,0.75)','rgba(236,72,153,0.75)'];
+    const B = ['rgb(59,130,246)','rgb(6,182,212)','rgb(16,185,129)','rgb(139,92,246)','rgb(244,63,94)','rgb(245,158,11)','rgb(236,72,153)'];
+    Chart.defaults.color = '#7a8ba0';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.scale.grid.color = 'rgba(59,130,246,0.05)';
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.animation.duration = 900;
+
+    new Chart(document.getElementById('complianceChart'), {
+        type: 'doughnut',
+        data: {
+            labels: [{% for r in compliance_data %}"{% if r.compliance_status %}{{ r.compliance_status }}{% else %}N/A{% endif %}",{% endfor %}],
+            datasets: [{ data: [{% for r in compliance_data %}{{ r.total }},{% endfor %}], backgroundColor: P, borderColor: B, borderWidth: 1.5 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ padding:14, font:{size:11} } } } }
+    });
+
+    new Chart(document.getElementById('incidentsChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for r in top_incidents_data %}"{{ r.name|escapejs }}",{% endfor %}],
+            datasets: [{ label:'Incidentes', data:[{% for r in top_incidents_data %}{{ r.incident_count }},{% endfor %}],
+                backgroundColor:'rgba(239,68,68,0.6)', borderColor:'rgb(239,68,68)', borderWidth:1.5, borderRadius:5, barPercentage:0.55 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, indexAxis:'y', plugins:{ legend:{display:false} }, scales:{ x:{beginAtZero:true,ticks:{precision:0}} } }
+    });
+
+    new Chart(document.getElementById('rolesChart'), {
+        type: 'polarArea',
+        data: {
+            labels: [{% for r in roles_data %}"{% if r.name %}{{ r.name|escapejs }}{% else %}N/A{% endif %}",{% endfor %}],
+            datasets: [{ data:[{% for r in roles_data %}{{ r.user_count }},{% endfor %}], backgroundColor:P, borderColor:B, borderWidth:1.5 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{padding:14,font:{size:11}} } } }
+    });
+
+    new Chart(document.getElementById('ticketsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: [{% for r in tickets_status_data %}"{% if r.status %}{{ r.status }}{% else %}N/A{% endif %}",{% endfor %}],
+            datasets: [{ data:[{% for r in tickets_status_data %}{{ r.total }},{% endfor %}], backgroundColor:P, borderColor:B, borderWidth:1.5 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, cutout:'70%', plugins:{ legend:{ position:'right', labels:{padding:12,font:{size:11}} } } }
+    });
+</script>
+{% endblock %}

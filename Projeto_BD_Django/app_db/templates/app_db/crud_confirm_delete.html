@@ -1,0 +1,63 @@
+{% extends "app_db/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .delete-page-header {
+        animation: fadeInDown 0.35s var(--ease-out) both;
+    }
+    .delete-card {
+        animation: scaleIn 0.4s var(--ease-out) both;
+        animation-delay: 0.08s;
+        position: relative;
+        overflow: hidden;
+    }
+    .delete-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, var(--red-500), var(--orange-400));
+        animation: shimmer 2.5s linear infinite;
+        background-size: 200% 100%;
+    }
+    .delete-card h2 {
+        animation: fadeInUp 0.35s var(--ease-out) both;
+        animation-delay: 0.15s;
+    }
+    .delete-card p {
+        animation: fadeInUp 0.35s var(--ease-out) both;
+        animation-delay: 0.2s;
+    }
+    .delete-actions {
+        animation: fadeInUp 0.35s var(--ease-out) both;
+        animation-delay: 0.28s;
+    }
+    .delete-actions .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239,68,68,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header delete-page-header">
+    <div>
+        <h1 class="page-title" style="background: none; -webkit-text-fill-color: var(--text-primary);">Eliminar Registo</h1>
+    </div>
+</div>
+
+<div class="delete-card">
+    <h2>Tem a certeza que deseja eliminar?</h2>
+    <p>Está prestes a eliminar o registo <span class="object-name">"{{ object_name }}"</span>. Esta ação marcará o registo como eliminado e não será mais visível nas listas principais.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="delete-actions">
+            <button type="submit" class="btn btn-danger">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                Confirmar Eliminação
+            </button>
+            <a href="{% url cancel_url %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
