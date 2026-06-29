@@ -89,15 +89,17 @@
                                 {% else %}{{ item }}{% endif %}
                             {% else %}
                                 <!-- Direct field access -->
-                                {% if item|getattr:field|yesno:"True,False" == "True" or item|getattr:field|yesno:"True,False" == "False" %}
-                                    {% if item|getattr:field %}
-                                        <span class="badge badge-active">Sim</span>
+                                {% with val=item|getattr:field %}
+                                    {% if val|is_bool %}
+                                        {% if val %}
+                                            <span class="badge badge-active">Sim</span>
+                                        {% else %}
+                                            <span class="badge badge-inactive">Não</span>
+                                        {% endif %}
                                     {% else %}
-                                        <span class="badge badge-inactive">Não</span>
+                                        {{ val|default:'—' }}
                                     {% endif %}
-                                {% else %}
-                                    {{ item|getattr:field|default:'—' }}
-                                {% endif %}
+                                {% endwith %}
                             {% endif %}
                         </td>
                         {% endfor %}

@@ -1,0 +1,214 @@
+erDiagram
+    Article_Categories {
+        CompositePrimaryKey pk PK
+        IntegerField article_id
+        IntegerField category_id
+    }
+    Articles {
+        BigAutoField id PK
+        ForeignKey author FK
+        CharField title
+        CharField slug
+        TextField summary
+        TextField content_body
+        CharField cover_image
+        DateField published_date
+        TextField status
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Assets {
+        BigAutoField id PK
+        ForeignKey company FK
+        IntegerField created_by_user_id
+        CharField asset_code
+        CharField name
+        TextField description
+        TextField category
+        CharField owner
+        CharField location
+        TextField confidentiality
+        TextField integrity
+        TextField availability
+        TextField status
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    AuditLogs {
+        BigAutoField id PK
+        ForeignKey user FK
+        CharField action
+        CharField entity_type
+        IntegerField entity_id
+        CharField ip_address
+        DateTimeField created_at
+    }
+    Categories {
+        BigAutoField id PK
+        CharField name
+        CharField slug
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Chat_Users {
+        CompositePrimaryKey pk PK
+        IntegerField chat_id
+        IntegerField user_id
+    }
+    Chats {
+        BigAutoField id PK
+        ForeignKey company FK
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Companies {
+        BigAutoField id PK
+        CharField name
+        IntegerField nif
+        CharField phone
+        CharField address
+        TextField compliance_status
+        BooleanField is_active
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+        ForeignKey client_owner FK
+        ForeignKey emergency_admin FK
+    }
+    Documents {
+        BigAutoField id PK
+        ForeignKey company FK
+        ForeignKey uploaded_by_user FK
+        TextField document_category
+        CharField title
+        CharField file_path
+        BooleanField is_action_required
+        TextField status
+        ForeignKey parent_document FK
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Incidents {
+        BigAutoField id PK
+        ForeignKey company FK
+        ForeignKey asset FK
+        ForeignKey reported_by_user FK
+        CharField title
+        TextField severity
+        TextField status
+        JSONField cncs_form_data
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Messages {
+        BigAutoField id PK
+        ForeignKey sender FK
+        ForeignKey ticket FK
+        ForeignKey chat FK
+        TextField content
+        BooleanField is_read
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Pages {
+        BigAutoField id PK
+        ForeignKey author FK
+        CharField title
+        CharField slug
+        JSONField content_body
+        CharField featured_image
+        TextField status
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Permissions {
+        BigAutoField id PK
+        CharField name
+        CharField description
+    }
+    Reports {
+        BigAutoField id PK
+        ForeignKey company FK
+        ForeignKey created_by_user FK
+        TextField report_type
+        CharField title
+        IntegerField risk_score
+        CharField file_path
+        TextField status
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Role_Permissions {
+        CompositePrimaryKey pk PK
+        IntegerField role_id
+        IntegerField permission_id
+    }
+    Roles {
+        BigAutoField id PK
+        CharField name
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Tickets {
+        BigAutoField id PK
+        ForeignKey company FK
+        ForeignKey opened_by_user FK
+        ForeignKey assigned_to_user FK
+        TextField category
+        TextField priority
+        CharField subject
+        TextField description
+        TextField status
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+    }
+    Users {
+        BigAutoField id PK
+        ForeignKey role FK
+        ForeignKey company FK
+        CharField name
+        CharField email
+        CharField password
+        CharField phone
+        BooleanField is_2fa_enabled
+        BooleanField is_active
+        DateTimeField created_at
+        DateTimeField updated_at
+        DateTimeField deleted_at
+        CharField activation_token
+        DateTimeField token_expires_at
+    }
+    Users ||--o{ Articles : "author"
+    Companies ||--o{ Assets : "company"
+    Users ||--o{ AuditLogs : "user"
+    Companies ||--o{ Chats : "company"
+    Users ||--o{ Companies : "client_owner"
+    Users ||--o{ Companies : "emergency_admin"
+    Companies ||--o{ Documents : "company"
+    Users ||--o{ Documents : "uploaded_by_user"
+    Documents ||--o{ Documents : "parent_document"
+    Companies ||--o{ Incidents : "company"
+    Assets ||--o{ Incidents : "asset"
+    Users ||--o{ Incidents : "reported_by_user"
+    Users ||--o{ Messages : "sender"
+    Tickets ||--o{ Messages : "ticket"
+    Chats ||--o{ Messages : "chat"
+    Users ||--o{ Pages : "author"
+    Companies ||--o{ Reports : "company"
+    Users ||--o{ Reports : "created_by_user"
+    Companies ||--o{ Tickets : "company"
+    Users ||--o{ Tickets : "opened_by_user"
+    Users ||--o{ Tickets : "assigned_to_user"
+    Roles ||--o{ Users : "role"
+    Companies ||--o{ Users : "company"

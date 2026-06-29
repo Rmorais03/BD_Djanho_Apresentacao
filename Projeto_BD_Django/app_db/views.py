@@ -140,6 +140,11 @@ def _build_mermaid_er(models_info):
         for field in model['fields']:
             ftype = safe_type(field['type'])
             fname = field['name'].replace(' ', '_')
+            
+            # Prevent Mermaid ER parser crash (confuses 'pk' field name with 'PK' keyword)
+            if fname.lower() == 'pk':
+                fname = 'id'
+                
             marker = ''
             if field.get('is_pk'):
                 marker = ' PK'
@@ -160,12 +165,678 @@ def _build_mermaid_er(models_info):
 
 
 def modelo_mermaid(request):
-    """Página com o diagrama ER gerado em Mermaid."""
-    models_info = get_model_info()
+    """Página com os diagramas ER gerados em Mermaid."""
+    
+    mermaid_fisico = """erDiagram
+    %% RELAÇÕES
+    Roles ||--o{ Users : "fk_users_roles"
+    Roles ||--o{ Role_Permissions : "fk_rp_roles"
+    Permissions ||--o{ Role_Permissions : "fk_rp_permissions"
+    Companies |o--o{ Users : "fk_users_companies"
+    Users ||--o{ Companies : "fk_companies_client_owner"
+    Users ||--o{ Companies : "fk_companies_emergency_admin"
+    Companies ||--o{ CompanyAdmins : "fk_ca_companies"
+    Users ||--o{ CompanyAdmins : "fk_ca_users"
+    Users ||--o{ Pages : "fk_pages_users"
+    Users ||--o{ Articles : "fk_articles_users"
+    Articles ||--o{ Article_Categories : "fk_ac_articles"
+    Categories ||--o{ Article_Categories : "fk_ac_categories"
+    Companies ||--o{ Assets : "fk_assets_companies"
+    Users ||--o{ Assets : "fk_assets_users"
+    Companies ||--o{ Documents : "fk_documents_companies"
+    Users ||--o{ Documents : "fk_documents_users"
+    Documents |o--o{ Documents : "fk_documents_parent"
+    Companies ||--o{ Reports : "fk_reports_companies"
+    Users ||--o{ Reports : "fk_reports_users"
+    Companies ||--o{ Incidents : "fk_incidents_companies"
+    Users ||--o{ Incidents : "fk_incidents_users"
+    Assets |o--o{ Incidents : "fk_incidents_assets"
+    Companies ||--o{ Tickets : "fk_tickets_companies"
+    Users ||--o{ Tickets : "fk_tickets_opened_by"
+    Users ||--o{ Tickets : "fk_tickets_assigned_to"
+    Companies ||--o{ Chats : "fk_chats_companies"
+    Chats ||--o{ Chat_Users : "fk_cu_chats"
+    Users ||--o{ Chat_Users : "fk_cu_users"
+    Tickets ||--o{ Messages : "fk_messages_tickets"
+    Chats ||--o{ Messages : "fk_messages_chats"
+    Users ||--o{ Messages : "fk_messages_sender"
+    Users |o--o{ AuditLogs : "fk_auditlogs_users"
+
+    %% ENTIDADES E ATRIBUTOS
+    Roles {
+        INTEGER id PK "nextval"
+        VARCHAR(255) name "NOT NULL"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Permissions {
+        INTEGER id PK "nextval"
+        VARCHAR(255) name "NOT NULL"
+        VARCHAR(255) description "Nullable"
+    }
+    Role_Permissions {
+        INTEGER role_id PK, FK "NOT NULL"
+        INTEGER permission_id PK, FK "NOT NULL"
+    }
+    Users {
+        INTEGER id PK "nextval"
+        INTEGER role_id FK "Nullable"
+        INTEGER company_id FK "Nullable"
+        VARCHAR(255) name "NOT NULL"
+        VARCHAR(255) email "NOT NULL"
+        VARCHAR(255) password "Nullable"
+        VARCHAR(255) phone "Nullable"
+        BOOLEAN is_2fa_enabled "Default: false"
+        BOOLEAN is_active "Default: true"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+        VARCHAR(255) activation_token "Nullable"
+        TIMESTAMP_TZ token_expires_at "Nullable"
+        TEXT avatar "Nullable"
+    }
+    Companies {
+        INTEGER id PK "nextval"
+        VARCHAR(255) name "NOT NULL"
+        INTEGER nif "NOT NULL"
+        VARCHAR(255) phone "Nullable"
+        VARCHAR(255) address "Nullable"
+        ENUM compliance_status "Default: 'Awaiting'"
+        BOOLEAN is_active "Default: true"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+        INTEGER client_owner_id FK "Nullable"
+        INTEGER emergency_admin_id FK "Nullable"
+    }
+    CompanyAdmins {
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        INTEGER company_id PK, FK "NOT NULL"
+        INTEGER user_id PK, FK "NOT NULL"
+    }
+    Pages {
+        INTEGER id PK "nextval"
+        INTEGER author_id FK "NOT NULL"
+        VARCHAR(255) title "NOT NULL"
+        VARCHAR(255) slug "NOT NULL"
+        JSONB content_body "Nullable"
+        VARCHAR(255) featured_image "Nullable"
+        ENUM status "Default: 'Draft'"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Articles {
+        INTEGER id PK "nextval"
+        INTEGER author_id FK "NOT NULL"
+        VARCHAR(255) title "NOT NULL"
+        VARCHAR(255) slug "NOT NULL"
+        TEXT summary "Nullable"
+        TEXT content_body "Nullable"
+        VARCHAR(255) cover_image "Nullable"
+        DATE published_date "Nullable"
+        ENUM status "Default: 'Draft'"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Categories {
+        INTEGER id PK "nextval"
+        VARCHAR(255) name "NOT NULL"
+        VARCHAR(255) slug "NOT NULL"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Article_Categories {
+        INTEGER article_id PK, FK "NOT NULL"
+        INTEGER category_id PK, FK "NOT NULL"
+    }
+    Assets {
+        INTEGER id PK "nextval"
+        INTEGER company_id FK "NOT NULL"
+        INTEGER created_by_user_id FK "NOT NULL"
+        VARCHAR(255) asset_code "Nullable"
+        VARCHAR(255) name "NOT NULL"
+        TEXT description "Nullable"
+        ENUM category "NOT NULL"
+        VARCHAR(255) owner "Nullable"
+        VARCHAR(255) location "Nullable"
+        ENUM confidentiality "Default: 'Medium'"
+        ENUM integrity "Default: 'Medium'"
+        ENUM availability "Default: 'Medium'"
+        ENUM status "Default: 'Active'"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Documents {
+        INTEGER id PK "nextval"
+        INTEGER company_id FK "NOT NULL"
+        INTEGER uploaded_by_user_id FK "NOT NULL"
+        ENUM document_category "NOT NULL"
+        VARCHAR(255) title "NOT NULL"
+        VARCHAR(255) file_path "NOT NULL"
+        BOOLEAN is_action_required "Default: false"
+        ENUM status "Default: 'Informational'"
+        INTEGER parent_document_id FK "Nullable"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Reports {
+        INTEGER id PK "nextval"
+        INTEGER company_id FK "NOT NULL"
+        INTEGER created_by_user_id FK "NOT NULL"
+        ENUM report_type "NOT NULL"
+        VARCHAR(255) title "NOT NULL"
+        INTEGER risk_score "Nullable"
+        VARCHAR(255) file_path "NOT NULL"
+        ENUM status "Default: 'Draft'"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Incidents {
+        INTEGER id PK "nextval"
+        INTEGER company_id FK "NOT NULL"
+        INTEGER asset_id FK "Nullable"
+        INTEGER reported_by_user_id FK "NOT NULL"
+        VARCHAR(255) title "NOT NULL"
+        ENUM severity "Default: 'Medium'"
+        ENUM status "Default: 'Open'"
+        JSONB cncs_form_data "NOT NULL"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Tickets {
+        INTEGER id PK "nextval"
+        INTEGER company_id FK "NOT NULL"
+        INTEGER opened_by_user_id FK "NOT NULL"
+        INTEGER assigned_to_user_id FK "Nullable"
+        ENUM category "NOT NULL"
+        ENUM priority "Default: 'Medium'"
+        VARCHAR(255) subject "NOT NULL"
+        TEXT description "NOT NULL"
+        ENUM status "Default: 'Open'"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Chats {
+        INTEGER id PK "nextval"
+        INTEGER company_id FK "NOT NULL"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+    }
+    Chat_Users {
+        INTEGER chat_id PK, FK "NOT NULL"
+        INTEGER user_id PK, FK "NOT NULL"
+    }
+    Messages {
+        INTEGER id PK "nextval"
+        INTEGER sender_id FK "NOT NULL"
+        INTEGER ticket_id FK "Nullable"
+        INTEGER chat_id FK "Nullable"
+        TEXT content "NOT NULL"
+        BOOLEAN is_read "Default: false"
+        TIMESTAMP_TZ created_at "NOT NULL"
+        TIMESTAMP_TZ updated_at "NOT NULL"
+        TIMESTAMP_TZ deleted_at "Nullable"
+        VARCHAR(255) attachment "Nullable"
+    }
+    AuditLogs {
+        INTEGER id PK "nextval"
+        INTEGER user_id FK "Nullable"
+        VARCHAR(255) action "NOT NULL"
+        VARCHAR(255) entity_type "Nullable"
+        INTEGER entity_id "Nullable"
+        VARCHAR(255) ip_address "Nullable"
+        TIMESTAMP_TZ created_at "NOT NULL"
+    }"""
+    
+    mermaid_logico = """erDiagram
+    %% RELAÇÕES
+    Roles ||--o{ Users : "possui"
+    Roles ||--o{ Role_Permissions : "associa"
+    Permissions ||--o{ Role_Permissions : "pertence"
+    Companies |o--o{ Users : "contem_clientes"
+    Users ||--o{ Companies : "e_dono_de"
+    Users ||--o{ Companies : "e_admin_emergencia"
+    Companies ||--o{ CompanyAdmins : "associa"
+    Users ||--o{ CompanyAdmins : "associa"
+    Users ||--o{ Pages : "escreve"
+    Users ||--o{ Articles : "escreve"
+    Articles ||--o{ Article_Categories : "possui"
+    Categories ||--o{ Article_Categories : "pertence_a"
+    Companies ||--o{ Assets : "detem"
+    Users ||--o{ Assets : "regista"
+    Companies ||--o{ Documents : "guarda"
+    Users ||--o{ Documents : "carrega"
+    Documents |o--o{ Documents : "tem_documento_pai"
+    Companies ||--o{ Reports : "recebe"
+    Users ||--o{ Reports : "gera"
+    Companies ||--o{ Incidents : "regista"
+    Users ||--o{ Incidents : "reporta"
+    Assets |o--o{ Incidents : "afeta"
+    Companies ||--o{ Tickets : "abre"
+    Users ||--o{ Tickets : "solicita"
+    Users ||--o{ Tickets : "atribuido_a"
+    Companies ||--o{ Chats : "aloja"
+    Chats ||--o{ Chat_Users : "inclui"
+    Users ||--o{ Chat_Users : "participa"
+    Tickets ||--o{ Messages : "contem"
+    Chats ||--o{ Messages : "agrega"
+    Users ||--o{ Messages : "envia"
+    Users |o--o{ AuditLogs : "despoleta"
+
+    %% ENTIDADES E ATRIBUTOS
+    Roles {
+        int id PK
+        string name
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Permissions {
+        int id PK
+        string name
+        string description
+    }
+    Role_Permissions {
+        int role_id PK, FK
+        int permission_id PK, FK
+    }
+    Users {
+        int id PK
+        int role_id FK
+        int company_id FK
+        string name
+        string email
+        string password
+        string phone
+        boolean is_2fa_enabled
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+        string activation_token
+        datetime token_expires_at
+        text avatar
+    }
+    Companies {
+        int id PK
+        string name
+        int nif
+        string phone
+        string address
+        enum compliance_status
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+        int client_owner_id FK
+        int emergency_admin_id FK
+    }
+    CompanyAdmins {
+        int company_id PK, FK
+        int user_id PK, FK
+        datetime created_at
+        datetime updated_at
+    }
+    Pages {
+        int id PK
+        int author_id FK
+        string title
+        string slug
+        jsonb content_body
+        string featured_image
+        enum status
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Articles {
+        int id PK
+        int author_id FK
+        string title
+        string slug
+        text summary
+        text content_body
+        string cover_image
+        date published_date
+        enum status
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Categories {
+        int id PK
+        string name
+        string slug
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Article_Categories {
+        int article_id PK, FK
+        int category_id PK, FK
+    }
+    Assets {
+        int id PK
+        int company_id FK
+        int created_by_user_id FK
+        string asset_code
+        string name
+        text description
+        enum category
+        string owner
+        string location
+        enum confidentiality
+        enum integrity
+        enum availability
+        enum status
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Documents {
+        int id PK
+        int company_id FK
+        int uploaded_by_user_id FK
+        enum document_category
+        string title
+        string file_path
+        boolean is_action_required
+        enum status
+        int parent_document_id FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Reports {
+        int id PK
+        int company_id FK
+        int created_by_user_id FK
+        enum report_type
+        string title
+        int risk_score
+        string file_path
+        enum status
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Incidents {
+        int id PK
+        int company_id FK
+        int asset_id FK
+        int reported_by_user_id FK
+        string title
+        enum severity
+        enum status
+        jsonb cncs_form_data
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Tickets {
+        int id PK
+        int company_id FK
+        int opened_by_user_id FK
+        int assigned_to_user_id FK
+        enum category
+        enum priority
+        string subject
+        text description
+        enum status
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Chats {
+        int id PK
+        int company_id FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    Chat_Users {
+        int chat_id PK, FK
+        int user_id PK, FK
+    }
+    Messages {
+        int id PK
+        int sender_id FK
+        int ticket_id FK
+        int chat_id FK
+        text content
+        boolean is_read
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+        string attachment
+    }
+    AuditLogs {
+        int id PK
+        int user_id FK
+        string action
+        string entity_type
+        int entity_id
+        string ip_address
+        datetime created_at
+    }
+"""
+
+    mermaid_concetual = """erDiagram
+    %% RELAÇÕES
+    ROLES ||--o{ USERS : "define_permissoes_de"
+    ROLES ||--o{ ROLE_PERMISSIONS : "possui"
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : "atribuida_a"
+    
+    COMPANIES ||--o{ USERS : "possui_clientes"
+    USERS ||--o{ COMPANIES : "e_dono_de"
+    USERS ||--o{ COMPANIES : "e_admin_emergencia"
+    
+    COMPANIES ||--o{ COMPANY_ADMINS : "gerida_por"
+    USERS ||--o{ COMPANY_ADMINS : "administra"
+    
+    USERS ||--o{ ARTICLES : "escreve"
+    ARTICLES ||--o{ ARTICLE_CATEGORIES : "possui"
+    CATEGORIES ||--o{ ARTICLE_CATEGORIES : "pertence_a"
+    USERS ||--o{ PAGES : "escreve_pagina"
+    
+    COMPANIES ||--o{ ASSETS : "detem"
+    USERS ||--o{ ASSETS : "regista_ativo"
+    
+    COMPANIES ||--o{ DOCUMENTS : "guarda"
+    USERS ||--o{ DOCUMENTS : "carrega"
+    DOCUMENTS |o--o{ DOCUMENTS : "e_subdocumento_de"
+    
+    COMPANIES ||--o{ REPORTS : "recebe"
+    USERS ||--o{ REPORTS : "gera"
+    
+    COMPANIES ||--o{ INCIDENTS : "sofre"
+    USERS ||--o{ INCIDENTS : "reporta"
+    ASSETS |o--o{ INCIDENTS : "envolvido_em"
+    
+    COMPANIES ||--o{ TICKETS : "abre"
+    USERS ||--o{ TICKETS : "solicita"
+    USERS ||--o{ TICKETS : "atribuido_a"
+    
+    COMPANIES ||--o{ CHATS : "aloja"
+    CHATS ||--o{ CHAT_USERS : "inclui"
+    USERS ||--o{ CHAT_USERS : "participa"
+    
+    TICKETS ||--o{ MESSAGES : "contem"
+    CHATS ||--o{ MESSAGES : "agrega"
+    USERS ||--o{ MESSAGES : "envia"
+    
+    USERS |o--o{ AUDIT_LOGS : "despoleta"
+
+    %% ENTIDADES E ATRIBUTOS
+    ROLES {
+        _ name
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    PERMISSIONS {
+        _ name
+        _ description
+    }
+    ROLE_PERMISSIONS {
+        _ relacao
+    }
+    USERS {
+        _ name
+        _ email
+        _ password
+        _ avatar
+        _ activation_token
+        _ token_expires_at
+        _ phone
+        _ is_2fa_enabled
+        _ is_active
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    COMPANIES {
+        _ name
+        _ nif
+        _ phone
+        _ address
+        _ compliance_status
+        _ is_active
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    COMPANY_ADMINS {
+        _ created_at
+        _ updated_at
+    }
+    PAGES {
+        _ title
+        _ slug
+        _ content_body
+        _ featured_image
+        _ status
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    ARTICLES {
+        _ title
+        _ slug
+        _ summary
+        _ content_body
+        _ cover_image
+        _ published_date
+        _ status
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    CATEGORIES {
+        _ name
+        _ slug
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    ARTICLE_CATEGORIES {
+        _ relacao
+    }
+    ASSETS {
+        _ asset_code
+        _ name
+        _ description
+        _ category
+        _ owner
+        _ location
+        _ confidentiality
+        _ integrity
+        _ availability
+        _ status
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    DOCUMENTS {
+        _ document_category
+        _ title
+        _ file_path
+        _ is_action_required
+        _ status
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    REPORTS {
+        _ report_type
+        _ title
+        _ risk_score
+        _ file_path
+        _ status
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    INCIDENTS {
+        _ title
+        _ severity
+        _ status
+        _ cncs_form_data
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    TICKETS {
+        _ category
+        _ priority
+        _ subject
+        _ description
+        _ status
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    CHATS {
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    CHAT_USERS {
+        _ relacao
+    }
+    MESSAGES {
+        _ content
+        _ is_read
+        _ attachment
+        _ created_at
+        _ updated_at
+        _ deleted_at
+    }
+    AUDIT_LOGS {
+        _ action
+        _ entity_type
+        _ entity_id
+        _ ip_address
+        _ created_at
+    }
+"""
+
     context = {
         'active_nav': 'modelo_mermaid',
-        'models': models_info,
-        'mermaid_code': _build_mermaid_er(models_info),
+        'mermaid_fisico': mermaid_fisico,
+        'mermaid_logico': mermaid_logico,
+        'mermaid_concetual': mermaid_concetual,
     }
     return render(request, 'app_db/modelo_mermaid.html', context)
 

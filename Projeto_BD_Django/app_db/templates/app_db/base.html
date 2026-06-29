@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dashboard{% endblock %} — NeonDB</title>
-    <meta name="description" content="{% block description %}Painel de controlo da base de dados NeonDB{% endblock %}">
+    <title>{% block title %}Dashboard{% endblock %} — CyberBoxSecur</title>
+    <meta name="description" content="{% block description %}Painel de controlo da base de dados CyberBoxSecur{% endblock %}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -672,9 +672,8 @@
         <!-- ══════════ SIDEBAR ══════════ -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="{% url 'app_db:dashboard' %}" class="sidebar-brand">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <span>NeonDB</span>
+                <a href="{% url 'app_db:dashboard' %}" class="sidebar-brand" style="justify-content: center; padding: 20px 0;">
+                    <img src="{% static 'app_db/images/logo.png' %}" alt="CyberBoxSecur" style="width: 85%; max-height: 140px; object-fit: contain; margin: 0 auto; transform: scale(1.15);">
                 </a>
             </div>
 
@@ -694,7 +693,7 @@
 
                 <a href="{% url 'app_db:modelo_mermaid' %}" class="nav-item {% if active_nav == 'modelo_mermaid' %}active{% endif %}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    <span>Diagrama ER</span>
+                    <span>Modelos</span>
                 </a>
 
                 <div class="nav-section-label">Dados</div>

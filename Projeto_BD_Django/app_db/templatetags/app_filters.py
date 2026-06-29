@@ -47,3 +47,8 @@ def replace(value, args):
         old = args
         new = ''
     return value.replace(old, new)
+
+@register.filter
+def is_bool(value):
+    """Returns True if the value is a boolean, False otherwise."""
+    return isinstance(value, bool)
