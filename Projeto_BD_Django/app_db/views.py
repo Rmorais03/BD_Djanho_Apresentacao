@@ -185,7 +185,6 @@ def modelo_mermaid(request):
     Users ||--o{ Assets : "fk_assets_users"
     Companies ||--o{ Documents : "fk_documents_companies"
     Users ||--o{ Documents : "fk_documents_users"
-    Documents |o--o{ Documents : "fk_documents_parent"
     Companies ||--o{ Reports : "fk_reports_companies"
     Users ||--o{ Reports : "fk_reports_users"
     Companies ||--o{ Incidents : "fk_incidents_companies"
@@ -321,7 +320,6 @@ def modelo_mermaid(request):
         VARCHAR(255) file_path "NOT NULL"
         BOOLEAN is_action_required "Default: false"
         ENUM status "Default: 'Informational'"
-        INTEGER parent_document_id FK "Nullable"
         TIMESTAMP_TZ created_at "NOT NULL"
         TIMESTAMP_TZ updated_at "NOT NULL"
         TIMESTAMP_TZ deleted_at "Nullable"
@@ -417,7 +415,6 @@ def modelo_mermaid(request):
     Users ||--o{ Assets : "regista"
     Companies ||--o{ Documents : "guarda"
     Users ||--o{ Documents : "carrega"
-    Documents |o--o{ Documents : "tem_documento_pai"
     Companies ||--o{ Reports : "recebe"
     Users ||--o{ Reports : "gera"
     Companies ||--o{ Incidents : "regista"
@@ -553,7 +550,6 @@ def modelo_mermaid(request):
         string file_path
         boolean is_action_required
         enum status
-        int parent_document_id FK
         datetime created_at
         datetime updated_at
         datetime deleted_at
@@ -655,7 +651,6 @@ def modelo_mermaid(request):
     
     COMPANIES ||--o{ DOCUMENTS : "guarda"
     USERS ||--o{ DOCUMENTS : "carrega"
-    DOCUMENTS |o--o{ DOCUMENTS : "e_subdocumento_de"
     
     COMPANIES ||--o{ REPORTS : "recebe"
     USERS ||--o{ REPORTS : "gera"
