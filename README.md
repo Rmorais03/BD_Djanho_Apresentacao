@@ -7,7 +7,7 @@ Este projeto é uma aplicação web desenvolvida em **Django** que serve como in
 
 ## 🚀 Como correr o projeto (Passo a Passo)
 
-Para executar o servidor e conseguir abrir a página HTML (com tudo a funcionar) no seu browser, siga atentamente as instruções abaixo:
+Para executar o servidor e conseguir abrir a página HTML (com tudo a funcionar) no seu browser a partir de um clone do GitHub, siga atentamente as instruções abaixo:
 
 ### Pré-requisitos
 - Ter o **Python** instalado no seu computador.
@@ -19,37 +19,43 @@ Abra o terminal e navegue para dentro da pasta principal da aplicação Django:
 cd Projeto_BD_Django
 ```
 
-### Passo 2: Ativar o Ambiente Virtual
-O projeto já contém um ambiente virtual (pasta `venv`). É importante ativá-lo para isolar as dependências.
+### Passo 2: Criar o Ambiente Virtual (Apenas na 1ª vez)
+Como a pasta `venv` não vai para o GitHub, tens de criar um ambiente virtual novo na tua máquina para instalar as bibliotecas de forma isolada:
+```bash
+python -m venv venv
+```
+
+### Passo 3: Ativar o Ambiente Virtual
+Após a criação, ativa o ambiente:
 - **No Windows (CMD / PowerShell):**
   ```cmd
   venv\Scripts\activate
   ```
 - **No Mac / Linux / Git Bash:**
   ```bash
-  source venv/Scripts/activate
+  source venv/bin/activate
   ```
 *(Ao ativar com sucesso, o terminal deverá mostrar `(venv)` no início da linha)*
 
-### Passo 3: Instalar as dependências
-Certifique-se de que as bibliotecas base para o projeto funcionar estão instaladas:
+### Passo 4: Instalar as dependências
+Com o ambiente ativado, instala todas as bibliotecas necessárias para o projeto funcionar a partir do ficheiro `requirements.txt`:
 ```bash
-pip install django psycopg2-binary
+pip install -r requirements.txt
 ```
 
-### Passo 4: Iniciar o Servidor Local
-Agora que tudo está configurado, inicie o servidor web interno do Django executando o seguinte comando:
+### Passo 5: Iniciar o Servidor Local
+Agora que tudo está configurado, inicia o servidor web interno do Django executando o seguinte comando:
 ```bash
 python manage.py runserver
 ```
 
-### Passo 5: Visualizar a página
-Abra o seu browser favorito (Chrome, Firefox, Edge, Safari, etc.) e aceda ao endereço local:
+### Passo 6: Visualizar a página
+Abre o teu browser favorito (Chrome, Firefox, Edge, Safari, etc.) e acede ao endereço local:
 👉 **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)**
 
 E já está! A página inicial (Dashboard) deverá carregar com sucesso. 🎉
 
-*(Para parar o servidor a qualquer momento, volte ao terminal e pressione `CTRL + C`)*
+*(Para parar o servidor a qualquer momento, volta ao terminal e pressiona `CTRL + C`)*
 
 ---
 
